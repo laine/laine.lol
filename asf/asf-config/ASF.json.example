@@ -1,0 +1,5 @@
+{
+  "Headless": true,
+  "IPCPassword": "change-me",
+  "RemoteCommunication": 0
+}

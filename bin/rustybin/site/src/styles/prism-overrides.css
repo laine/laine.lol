@@ -1,0 +1,94 @@
+/* Override Prism theme background colors to use our custom backgrounds */
+.editor-container {
+  background: var(--prism-bg) !important;
+  color: var(--prism-text-color) !important;
+}
+
+
+/* Target the editor and code areas */
+.editor-container pre,
+.editor-container code,
+.editor-container textarea {
+  background: transparent !important;
+  color: var(--prism-text-color) !important;
+}
+
+/* Target the Prism generated styles */
+[class*="language-"],
+pre[class*="language-"],
+code[class*="language-"] {
+  background: transparent !important;
+  color: var(--prism-text-color) !important;
+}
+
+/* Ensure syntax highlighting works with custom backgrounds */
+.token {
+  background: transparent !important;
+}
+
+/* Make sure the textarea and any line numbers have the same background */
+.line-numbers,
+.line-numbers-rows {
+  background: transparent !important;
+  color: var(--prism-text-color) !important;
+}
+
+/* Fix font issues */
+.editor-container,
+.editor-container pre,
+.editor-container code,
+.editor-container textarea {
+  font-family: "JetBrains Mono", monospace !important;
+  font-size: 0.875rem !important; /* text-sm */
+  line-height: 1.5 !important;
+  white-space: pre !important;
+  word-wrap: normal !important;
+  overflow-wrap: normal !important;
+}
+
+/* Apply text color from the theme if needed */
+.editor-container textarea {
+  caret-color: var(--prism-text-color) !important;
+  color: var(--prism-text-color) !important;
+}
+
+/* Placeholder text color */
+.editor-container textarea::placeholder {
+  color: var(--prism-text-color) !important;
+  opacity: 0.5;
+}
+
+/* Special handling for specific themes that might need additional overrides */
+[data-prism-theme="prism-coy"] .editor-container pre,
+[data-prism-theme="prism-coy"] .editor-container code {
+  box-shadow: none !important;
+}
+
+/* Dark scrollbar styles for editor */
+.editor-scroll-container::-webkit-scrollbar {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+.editor-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.editor-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+.editor-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.editor-scroll-container::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox dark scrollbar */
+.editor-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}

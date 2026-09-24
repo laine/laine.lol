@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="no-referrer">
+  <title>CS2 crosshair code converter</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="crosshair.css?v=2">
+</head>
+<body>
+  <main>
+    <div class="stats">Crosshair code → console commands</div>
+
+    <div class="toolbar">
+      <input type="text" id="code" placeholder="CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx" autocomplete="off" spellcheck="false" aria-label="Crosshair share code">
+      <button type="button" class="btn" id="paste">Paste</button>
+    </div>
+
+    <p class="state" id="state">Paste a crosshair share code to convert it.</p>
+
+    <div id="result" hidden>
+      <section class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Commands</span>
+          <div class="panel-actions">
+            <div class="sort" role="group" aria-label="Command layout">
+              <button type="button" data-layout="line" class="active" aria-pressed="true">One line</button>
+              <button type="button" data-layout="lines" aria-pressed="false">Per line</button>
+            </div>
+            <button type="button" class="btn" id="copy">Copy</button>
+          </div>
+        </div>
+        <pre class="commands" id="commands"></pre>
+      </section>
+
+      <div class="grid">
+        <section class="panel preview">
+          <div class="panel-head">
+            <span class="panel-title">Preview</span>
+            <span class="meta" id="zoom"></span>
+          </div>
+          <canvas id="canvas" width="240" height="240" role="img" aria-label="Crosshair preview"></canvas>
+          <p class="note">Static shape at native pixel size, zoomed. Dynamic styles and recoil aren't simulated.</p>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Settings</span>
+          </div>
+          <table class="settings"><tbody id="settings"></tbody></table>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="decode.js?v=2" defer></script>
+  <script src="crosshair.js?v=3" defer></script>
+</body>
+</html>

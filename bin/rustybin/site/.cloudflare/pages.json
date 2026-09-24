@@ -1,0 +1,28 @@
+{
+  "build": {
+    "command": "cd site && npm install && npm run build",
+    "output_directory": "dist",
+    "root_directory": "./",
+    "environment_variables": {
+      "NODE_VERSION": "18"
+    }
+  },
+  "routes": [
+    {
+      "pattern": "/*",
+      "script": null,
+      "serve": "/index.html",
+      "status": 200
+    }
+  ],
+  "environments": {
+    "production": {
+      "name": "production",
+      "env_vars": {}
+    },
+    "preview": {
+      "name": "preview",
+      "env_vars": {}
+    }
+  }
+}

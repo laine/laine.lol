@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="Referrer-Policy" content="no-referrer">
+  <title>CS2 build archive</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="cs2.css?v=2">
+</head>
+<body>
+  <main>
+    <div class="stats" id="stats" aria-live="polite"></div>
+
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="Filter by date…  e.g. 2025-09" autocomplete="off" spellcheck="false" aria-label="Filter by date">
+      <div class="sort" role="group" aria-label="Sort order">
+        <button type="button" data-sort="date" class="active">Newest</button>
+        <button type="button" data-sort="date-asc">Oldest</button>
+      </div>
+    </div>
+
+    <ul class="files" id="files"></ul>
+    <p class="state" id="state">Loading…</p>
+  </main>
+
+  <script src="cs2.js?v=3" defer></script>
+</body>
+</html>

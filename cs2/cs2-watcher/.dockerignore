@@ -1,0 +1,11 @@
+# Keep the build context tiny — only ./app is COPYed into the image.
+.env
+data/
+web/
+.git/
+.gitignore
+README.md
+docker-compose.yml
+nginx.conf
+__pycache__/
+*.pyc

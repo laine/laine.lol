@@ -1,0 +1,30 @@
+# VCS / CI
+.git
+.github
+
+# Local state & secrets
+.env
+data
+*.db
+*.db-wal
+*.db-shm
+
+# Rust build output
+target
+
+# Frontend build output & deps (rebuilt inside the image)
+site/node_modules
+site/dist
+site/.env
+site/.cloudflare
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Docs / misc not needed in the image
+examples
+README.md
+API_ENCRYPTION.md
+LICENSE

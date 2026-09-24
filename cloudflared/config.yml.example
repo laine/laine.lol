@@ -1,0 +1,22 @@
+# Cloudflare Tunnel ingress for laine.lol. Lives at /etc/cloudflared/config.yml
+# on the host (cloudflared runs as a systemd service, not in compose). Every
+# hostname goes to the one nginx on 127.0.0.1:80, which routes by Host header.
+# Keep the catch-all 404 last.
+
+tunnel: <TUNNEL-ID>
+credentials-file: /etc/cloudflared/<TUNNEL-ID>.json
+
+ingress:
+  - hostname: laine.lol
+    service: http://127.0.0.1:80
+  - hostname: www.laine.lol
+    service: http://127.0.0.1:80
+  - hostname: asf.laine.lol
+    service: http://127.0.0.1:80
+  - hostname: bin.laine.lol
+    service: http://127.0.0.1:80
+  - hostname: cs2.laine.lol
+    service: http://127.0.0.1:80
+  - hostname: crosshair.laine.lol
+    service: http://127.0.0.1:80
+  - service: http_status:404

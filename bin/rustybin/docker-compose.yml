@@ -1,0 +1,30 @@
+services:
+  rustybin:
+    # Set RUSTYBIN_IMAGE=ghcr.io/<owner>/rustybin:<tag> in .env to deploy a
+    # published image instead of building locally (docker compose up -d --no-build).
+    image: ${RUSTYBIN_IMAGE:-rustybin:latest}
+    build:
+      context: .
+      args:
+        # Relative /v1 because the backend serves the SPA same-origin.
+        VITE_API_URL: ${VITE_API_URL:-/v1}
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      RUST_ENV: production
+      PORT: 3000
+      RUST_LOG: ${RUST_LOG:-info}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      READ_RATE_LIMIT: ${READ_RATE_LIMIT:-45}
+      CREATE_RATE_LIMIT: ${CREATE_RATE_LIMIT:-15}
+      UPDATE_RATE_LIMIT: ${UPDATE_RATE_LIMIT:-15}
+      DELETE_RATE_LIMIT: ${DELETE_RATE_LIMIT:-15}
+      # Admin dashboard is disabled while ADMIN_SECRET is empty.
+      ADMIN_SECRET: ${ADMIN_SECRET:-}
+      ADMIN_SESSION_HOURS: ${ADMIN_SESSION_HOURS:-24}
+    volumes:
+      - rustybin-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  rustybin-data:

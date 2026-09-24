@@ -1,0 +1,44 @@
+# ---------------------------------------------------------------------------
+# Secrets — never commit. Each has a checked-in *.example next to it.
+# ---------------------------------------------------------------------------
+.env
+cs2/cs2.env
+asf/asf-config/*.json
+!asf/asf-config/*.json.example
+
+# ---------------------------------------------------------------------------
+# Runtime state written by containers
+# ---------------------------------------------------------------------------
+# ArchiSteamFarm databases, crash dumps, plugin caches, logs
+asf/asf-config/*.db
+asf/asf-config/*.crash
+asf/asf-config/*.cache
+asf/asf-config/*.bak
+asf/asf-config/*.log
+asf/asf-config/*.maFile*
+
+# ---------------------------------------------------------------------------
+# Build output + dependencies
+# ---------------------------------------------------------------------------
+node_modules/
+dist/
+target/
+__pycache__/
+*.py[cod]
+.vite/
+*.tsbuildinfo
+coverage/
+
+# ---------------------------------------------------------------------------
+# Local cruft
+# ---------------------------------------------------------------------------
+_archive/
+*.bak
+*.bak-*
+*.orig
+*.swp
+*~
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

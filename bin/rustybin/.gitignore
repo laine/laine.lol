@@ -1,0 +1,36 @@
+# Rust
+/target
+**/*.rs.bk
+*.rlib
+*.prof*
+
+# Node.js
+node_modules/
+dist/
+*.log
+
+# Environment
+.env
+.env.*
+
+# Data
+/data
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.tmp
+
+# Internal tooling
+.claude/
+.specify/
+specs/
+.superpowers/
+
+# Keep superpowers design docs tracked even though `specs/` is ignored above
+!docs/superpowers/specs/

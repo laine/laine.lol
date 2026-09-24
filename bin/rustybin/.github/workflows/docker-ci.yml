@@ -1,0 +1,62 @@
+name: Docker CI
+
+# Build-validation only — proves the image builds and the compose file is valid.
+# Publishing to GHCR happens separately in docker-image.yml (on v*.*.* tags).
+
+on:
+  push:
+    branches:
+      - main
+      - 003-foxybin-redesign
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker-compose.yml"
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "site/**"
+      - ".github/workflows/docker-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker-compose.yml"
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "site/**"
+      - ".github/workflows/docker-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build image & validate compose
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml
+        run: docker compose config -q
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          build-args: |
+            VITE_API_URL=/v1
+          tags: rustybin:ci
+          # Shares the layer cache with the publish workflow (docker-image.yml).
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64

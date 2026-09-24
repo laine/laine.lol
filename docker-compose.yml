@@ -1,0 +1,89 @@
+# Cap each container's json-file log (default is unbounded; nginx logs every
+# request to stdout).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  web:
+    build: ./web
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "--header=Host: laine.lol", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - asf
+      - bin
+      - watcher
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      # Archived CS2 builds served at cs2.laine.lol/files/. The `watcher` service
+      # writes dated .7z builds into this shared volume; nginx mounts it
+      # read-only and aliases /files/ to its downloads/ subdir (see nginx.conf).
+      - cs2-data:/usr/share/nginx/cs2-data:ro
+      # cs2.laine.lol listing UI. Bind-mounted read-only (kept out of the image so
+      # UI tweaks need no rebuild); nginx roots cs2.laine.lol here (see nginx.conf).
+      - ./cs2/cs2-site:/usr/share/nginx/cs2-site:ro
+      # crosshair.laine.lol share-code converter. Purely static, decoded in the
+      # browser; bind-mounted read-only like cs2-site (see nginx.conf).
+      - ./crosshair/crosshair-site:/usr/share/nginx/crosshair-site:ro
+
+  asf:
+    image: justarchi/archisteamfarm:released
+    restart: unless-stopped
+    logging: *logging
+    pull_policy: always
+    volumes:
+      - ./asf/asf-config:/app/config
+    # No host port published: nginx reaches it over the compose network at asf:1242
+
+  bin:
+    build: ./bin/rustybin
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      RUST_ENV: production
+      PORT: "3000"
+      # Same-origin SPA + API, so this is the only origin that needs allowing.
+      CORS_ALLOWED_ORIGINS: https://bin.laine.lol
+      # Admin dashboard enabled. ADMIN_SECRET is read from the .env file next to
+      # this compose file (chmod 600), not committed inline here.
+      ADMIN_SECRET: ${ADMIN_SECRET:?ADMIN_SECRET must be set in .env}
+    volumes:
+      - bin-data:/app/data
+    # No host port published: nginx reaches it over the compose network at bin:3000
+
+  # CS2 update watcher (cs2.laine.lol). Polls steamcmd.net (login-free) for new
+  # CS2 builds and, when one appears, signs in to Steam and archives it as a dated
+  # solid .7z into the shared cs2-data volume, which the web/nginx service serves at
+  # /files/. Steam creds + tuning live in ./cs2/cs2.env (chmod 600).
+  #   One-time interactive login:  docker compose run --rm watcher login
+  #   Recompress old .zip builds:   docker compose run --rm --no-deps watcher backfill
+  watcher:
+    build: ./cs2/cs2-watcher
+    image: cs2-update-watcher
+    restart: unless-stopped
+    logging: *logging
+    # The loop touches /data/.heartbeat every poll. 3h tolerates a long
+    # download + archive (plus Steam rate-limit back-off) inside one cycle.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,sys,time; sys.exit(time.time() - os.path.getmtime('/data/.heartbeat') > 10800)"]
+      interval: 5m
+      timeout: 10s
+      start_period: 1m
+    init: true            # clean SIGTERM handling for `docker compose down`
+    env_file: cs2/cs2.env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - cs2-data:/data
+
+volumes:
+  bin-data:
+  cs2-data:
