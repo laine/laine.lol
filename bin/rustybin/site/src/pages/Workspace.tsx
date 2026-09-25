@@ -14,7 +14,8 @@ import {
 import { WorkspaceSidebar } from "@/components/workspace/WorkspaceSidebar";
 import PasteTextArea, { type PasteTextAreaHandle } from "@/components/paste/PasteTextArea";
 import MarkdownToolbar from "@/components/paste/MarkdownToolbar";
-import { MarkdownViewer } from "@/components/paste/MarkdownViewer";
+import { MarkdownViewer } from "@/components/paste/LazyMarkdownViewer";
+import { usePreloadMarkdownViewer } from "@/components/paste/markdown-viewer-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,6 +69,7 @@ const EXPIRATION_OPTIONS = [
 ];
 
 export default function Workspace() {
+  usePreloadMarkdownViewer();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 

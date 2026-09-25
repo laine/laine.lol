@@ -1,4 +1,55 @@
-import hljs from "highlight.js";
+// Import only the highlight.js core plus the grammars we actually detect
+// (the full "highlight.js" entry bundles ~190 languages, ~900 KB minified).
+import hljs from "highlight.js/lib/core";
+import xml from "highlight.js/lib/languages/xml";
+import javascript from "highlight.js/lib/languages/javascript";
+import typescript from "highlight.js/lib/languages/typescript";
+import python from "highlight.js/lib/languages/python";
+import java from "highlight.js/lib/languages/java";
+import c from "highlight.js/lib/languages/c";
+import cpp from "highlight.js/lib/languages/cpp";
+import csharp from "highlight.js/lib/languages/csharp";
+import rust from "highlight.js/lib/languages/rust";
+import go from "highlight.js/lib/languages/go";
+import bash from "highlight.js/lib/languages/bash";
+import shell from "highlight.js/lib/languages/shell";
+import sql from "highlight.js/lib/languages/sql";
+import json from "highlight.js/lib/languages/json";
+import yaml from "highlight.js/lib/languages/yaml";
+import markdown from "highlight.js/lib/languages/markdown";
+import css from "highlight.js/lib/languages/css";
+// Only referenced as embedded sub-languages by the grammars above
+// (xml <script>, javascript/typescript gql``, yaml erb). Registering them keeps
+// relevance scores identical to the full highlight.js build.
+import handlebars from "highlight.js/lib/languages/handlebars";
+import graphql from "highlight.js/lib/languages/graphql";
+import ruby from "highlight.js/lib/languages/ruby";
+
+const grammars = {
+  xml,
+  javascript,
+  typescript,
+  python,
+  java,
+  c,
+  cpp,
+  csharp,
+  rust,
+  go,
+  bash,
+  shell,
+  sql,
+  json,
+  yaml,
+  markdown,
+  css,
+  handlebars,
+  graphql,
+  ruby,
+};
+for (const [name, grammar] of Object.entries(grammars)) {
+  hljs.registerLanguage(name, grammar);
+}
 
 /**
  * Maps highlight.js language names to our internal language names

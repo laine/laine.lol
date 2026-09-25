@@ -5,7 +5,15 @@ import Layout from "@/components/layout/Layout";
 import PasteTextArea, {
   type ByteStats,
 } from "@/components/paste/PasteTextArea";
-import { detectLanguage } from "@/lib/language-detector";
+// The language detector pulls in highlight.js grammars, so it's loaded on
+// demand the first time someone types enough text into a new paste.
+let languageDetector: Promise<typeof import("@/lib/language-detector")> | null =
+  null;
+const loadLanguageDetector = () =>
+  (languageDetector ??= import("@/lib/language-detector").catch((error) => {
+    languageDetector = null; // allow a retry on the next keystroke
+    throw error;
+  }));
 import { debounce } from "@/lib/debounce";
 import { processDroppedFiles } from "@/lib/file-drop";
 import type { ShareDialogData } from "@/lib/types";
@@ -30,7 +38,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MarkdownViewer } from "@/components/paste/MarkdownViewer";
+import { MarkdownViewer } from "@/components/paste/LazyMarkdownViewer";
+import { usePreloadMarkdownViewer } from "@/components/paste/markdown-viewer-loader";
 import {
   Copy,
   Check,
@@ -77,6 +86,7 @@ const EXPIRATION_OPTIONS = [
 ];
 
 const Index: React.FC = () => {
+  usePreloadMarkdownViewer();
   const [text, setText] = useState("");
   const [language, setLanguage] = useState("markdown");
   const [isLanguageManuallySelected, setIsLanguageManuallySelected] =
@@ -221,21 +231,36 @@ const Index: React.FC = () => {
 
     setIsDetectingLanguage(true);
 
+    // Start fetching the detector now so it's ready when the debounce fires
+    // (errors are handled below, when the debounced detection runs)
+    loadLanguageDetector().catch(() => {});
+    let cancelled = false;
+
     // Debounce the detection to run ~1 second after user stops typing
     const timeoutId = setTimeout(() => {
-      const detected = detectLanguage(text);
-      // If detection returns something valid (not "unknown"), use it
-      // Otherwise fallback to javascript
-      const newLanguage = detected !== "unknown" ? detected : "javascript";
+      loadLanguageDetector()
+        .then(({ detectLanguage }) => {
+          if (cancelled) return;
+          const detected = detectLanguage(text);
+          // If detection returns something valid (not "unknown"), use it
+          // Otherwise fallback to javascript
+          const newLanguage = detected !== "unknown" ? detected : "javascript";
 
-      // Only update if the language actually changed
-      if (newLanguage !== language) {
-        setLanguage(newLanguage);
-      }
-      setIsDetectingLanguage(false);
+          // Only update if the language actually changed
+          if (newLanguage !== language) {
+            setLanguage(newLanguage);
+          }
+          setIsDetectingLanguage(false);
+        })
+        .catch((error) => {
+          if (cancelled) return;
+          console.error("Failed to load language detector:", error);
+          setIsDetectingLanguage(false);
+        });
     }, 1000);
 
     return () => {
+      cancelled = true;
       clearTimeout(timeoutId);
       setIsDetectingLanguage(false);
     };
