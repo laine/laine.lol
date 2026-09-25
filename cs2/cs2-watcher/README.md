@@ -70,7 +70,7 @@ Browse and download archived builds at **http://localhost:8080**
 
 | Variable                   | Default                | Meaning                                                        |
 | -------------------------- | ---------------------- | -------------------------------------------------------------- |
-| `STEAM_USER` / `STEAM_PASS`| —                      | Steam account (needed to **download**; detection is login-free)|
+| `STEAM_USER` / `STEAM_PASS`| —                      | Steam account (needed to **download**; detection is login-free). The password is only used by `login`; downloads sign in with the saved session token, so it never appears on a command line |
 | `STEAM_APPID`              | `730`                  | App to watch (730 = CS2)                                        |
 | `STEAM_DEPOT`              | `2347771`              | Depot to watch (CS2 win64 binaries)                            |
 | `STEAM_BRANCH`             | `public`               | Branch to watch                                                |
@@ -81,6 +81,7 @@ Browse and download archived builds at **http://localhost:8080**
 | `DOWNLOAD_TIMEOUT` / `ARCHIVE_TIMEOUT` | `3600` / `1800` | Seconds before a stuck DepotDownloader / 7z run is killed (0 = never) |
 | `MIN_FREE_MB`              | `2048`                 | Skip downloads (and report `failed`) when free space is below this |
 | `MAX_RETRY_BACKOFF`        | `21600`                | Cap for the exponential back-off between retries of a failed build |
+| `MAX_ARCHIVE_GB`           | `0` (off)              | After each new build, delete the oldest archives until `downloads/` fits in this many GB |
 | `DOWNLOAD_LATEST_ON_START` | `true`                 | Archive the current build on first run, then only new ones      |
 | `WEBHOOK_URL`              | — (disabled)           | Discord / Slack / generic JSON endpoint                        |
 | `WEBHOOK_FORMAT`           | `auto`                 | `auto` / `discord` / `slack` / `generic`                       |
@@ -160,3 +161,19 @@ that supports JSON directory listing (nginx config provided in `nginx.conf`).
   watcher logs it and retries on the next poll. Override the endpoint with
   `STEAMCMD_API` if needed.
 - **"does not own the app"** — sign in with an account that owns the app.
+
+## Image notes
+
+- **DepotDownloader is pinned** (`DEPOTDOWNLOADER_VERSION` / `DEPOTDOWNLOADER_SHA256`
+  build args in the `Dockerfile`), verified by checksum and installed at
+  `/opt/depotdownloader`. The runtime "download latest" code is only a fallback
+  when it isn't on `PATH`.
+- **Runs as uid 10001.** A `/data` volume created by an older root image needs a
+  one-time `chown`, with the watcher stopped:
+  `docker run --rm -v website_cs2-data:/d alpine chown -R 10001:10001 /d`.
+- **Saved Steam session and the binary's path.** DepotDownloader keeps its login
+  token in .NET IsolatedStorage under
+  `/data/.local/share/IsolatedStorage/…/Url.<hash>/AssemFiles/account.config`.
+  The `<hash>` is derived from the **path of the DepotDownloader executable**. If
+  the binary moves, it can't find the token. Either copy `account.config` into
+  the new `Url.*` directory, which appears after one run, or run `login` again.

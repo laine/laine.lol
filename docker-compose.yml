@@ -24,9 +24,15 @@ services:
       - "127.0.0.1:80:80"
     volumes:
       # Archived CS2 builds served at cs2.laine.lol/files/. The `watcher` service
-      # writes dated .7z builds into this shared volume; nginx mounts it
-      # read-only and aliases /files/ to its downloads/ subdir (see nginx.conf).
-      - cs2-data:/usr/share/nginx/cs2-data:ro
+      # writes dated .7z builds into the cs2-data volume. nginx gets ONLY its
+      # downloads/ subdir (read-only), never the Steam session/state next to it;
+      # /files/ aliases this path (see nginx.conf).
+      - type: volume
+        source: cs2-data
+        target: /usr/share/nginx/cs2-data/downloads
+        read_only: true
+        volume:
+          subpath: downloads
       # cs2.laine.lol listing UI. Bind-mounted read-only (kept out of the image so
       # UI tweaks need no rebuild); nginx roots cs2.laine.lol here (see nginx.conf).
       - ./cs2/cs2-site:/usr/share/nginx/cs2-site:ro

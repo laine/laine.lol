@@ -53,10 +53,10 @@ published through a Cloudflare Tunnel. No port is open to the internet.
 
 | Service | Image / build | Data | Notes |
 | --- | --- | --- | --- |
-| `web` | `./web` (nginx:alpine + `nginx.conf`) | bind-mounts `cs2/cs2-site`, `crosshair/crosshair-site`; `cs2-data` (ro) | Healthcheck hits `laine.lol` |
+| `web` | `./web` (nginx:alpine + `nginx.conf`) | bind-mounts `cs2/cs2-site`, `crosshair/crosshair-site`; only the `downloads/` subpath of `cs2-data` (ro) | Healthcheck hits `laine.lol` |
 | `asf` | `justarchi/archisteamfarm:released` | `./asf/asf-config` | Config holds secrets (gitignored; see examples) |
 | `bin` | `./bin/rustybin` (multi-stage Rust + Vite) | `bin-data` volume (SQLite) | Runs as uid 10001 |
-| `watcher` | `./cs2/cs2-watcher` (python:3.12-slim + 7zip) | `cs2-data` volume | Config in `cs2/cs2.env` |
+| `watcher` | `./cs2/cs2-watcher` (python:3.12-slim + 7zip + pinned DepotDownloader) | `cs2-data` volume | Runs as uid 10001; config in `cs2/cs2.env` |
 
 Every service caps its json-file logs at 3 × 10 MB (the `x-logging` anchor).
 
@@ -269,7 +269,13 @@ and [API_ENCRYPTION.md](bin/rustybin/API_ENCRYPTION.md).
     - writes to hidden `.NAME.part` files, which nginx refuses to serve, then
       renames them into place atomically;
     - cleans up on SIGTERM, and touches a heartbeat file that the compose
-      healthcheck watches.
+      healthcheck watches;
+    - downloads sign in with the saved session token only, so the Steam
+      password never appears in `ps`. `STEAM_PASS` is only needed for `login`;
+    - runs as uid 10001 with a checksum-pinned DepotDownloader;
+    - supports optional retention with `MAX_ARCHIVE_GB`.
+  - nginx mounts only the volume's `downloads/` subdir, so it can't read the Steam
+    session or state files.
 - **Site** ([`cs2/cs2-site/`](cs2/cs2-site/)): a static page that fetches nginx's
   JSON autoindex of `/files/` and renders a filterable, sortable list. Known CS2
   update names show up as labels.

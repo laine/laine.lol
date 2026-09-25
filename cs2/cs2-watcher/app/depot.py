@@ -225,7 +225,11 @@ def _auth_signal(output: str) -> str | None:
     low = output.lower()
     for sig in ("invalid password", "two-factor code mismatch",
                 "no code was provided", "failed to authenticate with steam",
-                "two factor", "invalidpassword", "expired", "loginid"):
+                "two factor", "invalidpassword", "expired", "loginid",
+                # No saved session and no password given (watcher runs are
+                # username-only): DepotDownloader prompts, then crashes.
+                "enter account password",
+                "requires a username and password or access token"):
         if sig in low:
             return sig
     return None
@@ -236,7 +240,7 @@ def _ratelimit_signal(output: str) -> bool:
 
 
 def run_depotdownloader(exe: Path, appid: int, depot: int, out_dir: Path,
-                        user: str, password: str, filelist: Path | None = None,
+                        user: str, password: str | None, filelist: Path | None = None,
                         manifest: str | None = None, cwd: Path | None = None,
                         stdin=subprocess.DEVNULL) -> tuple[int, str]:
     """Run DepotDownloader once. Returns (returncode, combined_output).
@@ -244,6 +248,10 @@ def run_depotdownloader(exe: Path, appid: int, depot: int, out_dir: Path,
     `manifest=None` downloads the current branch build. `cwd` is where DepotDownloader
     writes its remembered-session token/cache (kept on the data volume so the Steam
     Guard prompt only happens once). `stdin=None` inherits the terminal for `login`.
+
+    `password=None` signs in with the remembered session token alone. The watcher
+    does this so the password never appears on a command line (`ps`, /proc) during
+    downloads; only the interactive `login` passes it.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     run_cwd = Path(cwd) if cwd else config.SESSION_DIR
@@ -252,14 +260,16 @@ def run_depotdownloader(exe: Path, appid: int, depot: int, out_dir: Path,
     cmd = [str(exe), "-app", str(appid), "-depot", str(depot)]
     if manifest:
         cmd += ["-manifest", str(manifest)]
-    cmd += ["-username", user, "-password", password,
-            "-dir", str(out_dir), "-remember-password",
+    cmd += ["-username", user]
+    if password:
+        cmd += ["-password", password]
+    cmd += ["-dir", str(out_dir), "-remember-password",
             "-max-servers", str(config.MAX_SERVERS),
             "-max-downloads", str(config.MAX_DOWNLOADS)]
     if filelist is not None:
         cmd += ["-filelist", str(filelist)]
 
-    printable = " ".join("***" if a == password else a for a in cmd)
+    printable = " ".join("***" if password and a == password else a for a in cmd)
     log(f"  $ {printable}")
 
     # Steer DepotDownloader's session/cache onto the persistent volume regardless

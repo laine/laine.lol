@@ -73,6 +73,27 @@ def _archive_name(info: BuildInfo) -> str:
     return f"{unique}{ext}"
 
 
+def prune_archives(keep: Path) -> None:
+    """Enforce MAX_ARCHIVE_GB by deleting the oldest archives (names sort by
+    date). Never deletes `keep`, the archive that was just written."""
+    if config.MAX_ARCHIVE_GB <= 0:
+        return
+    limit = config.MAX_ARCHIVE_GB * 1024 ** 3
+    archives = sorted(p for p in config.DOWNLOADS_DIR.iterdir()
+                      if p.suffix in ARCHIVE_EXTS and not p.name.startswith("."))
+    total = sum(p.stat().st_size for p in archives)
+    for p in archives:
+        if total <= limit:
+            break
+        if p == keep:
+            continue
+        size = p.stat().st_size
+        p.unlink()
+        total -= size
+        log(f"retention: deleted {p.name} ({human_size(size)}); "
+            f"archive now {human_size(total)} / {config.MAX_ARCHIVE_GB} GB")
+
+
 def _build_filelist():
     if not config.FILES:
         return None
@@ -122,7 +143,7 @@ def _download_and_archive(exe: Path, info: BuildInfo, filelist: Path | None) -> 
             shutil.rmtree(staging, ignore_errors=True)
         rc, output = depot.run_depotdownloader(
             exe, config.APPID, config.DEPOT, staging,
-            config.STEAM_USER, config.STEAM_PASS,
+            config.STEAM_USER, None,   # session token only; see run_depotdownloader
             filelist=filelist, manifest=info.manifest, cwd=config.SESSION_DIR,
         )
         if rc == 0 or not depot._ratelimit_signal(output):
@@ -224,9 +245,9 @@ def check_once(state: dict, exe: Path, filelist: Path | None,
         )
         announced["detected"] = info.key
 
-    if not (config.STEAM_USER and config.STEAM_PASS):
-        msg = "STEAM_USER/STEAM_PASS not set — cannot download. Set them and " \
-              "run the one-time `login` command."
+    if not config.STEAM_USER:
+        msg = "STEAM_USER not set — cannot download. Set STEAM_USER/STEAM_PASS " \
+              "and run the one-time `login` command."
         log(f"download skipped: {msg}")
         if announced.get("failed") != info.key:
             webhook.notify("failed", title="CS2 build download skipped",
@@ -264,6 +285,10 @@ def check_once(state: dict, exe: Path, filelist: Path | None,
     path = result.path
     link = _download_link(path)
     log(f"archived {path.name} ({result.n_files} files, {human_size(result.size)})")
+    try:
+        prune_archives(keep=path)
+    except OSError as e:
+        log(f"retention: could not prune old archives: {e}")
     webhook.notify(
         "completed",
         title="CS2 build archived",
@@ -304,9 +329,9 @@ def watch() -> int:
         log(f"keeping {len(config.FILES)} file pattern(s) per build.")
     else:
         log("keeping ALL files in the depot (STEAM_FILES is empty).")
-    if not (config.STEAM_USER and config.STEAM_PASS):
-        log("WARNING: STEAM_USER/STEAM_PASS not set — detection works, but "
-            "downloads will be skipped until credentials + `login` are provided.")
+    if not config.STEAM_USER:
+        log("WARNING: STEAM_USER not set — detection works, but downloads will "
+            "be skipped until credentials + `login` are provided.")
 
     exe, filelist = _prepare()
     state = load_state()

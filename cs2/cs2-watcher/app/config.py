@@ -110,6 +110,9 @@ MIN_FREE_MB = _int("MIN_FREE_MB", 2048)               # skip downloads below thi
 # Failed downloads of the same build are retried with exponential back-off
 # (POLL_INTERVAL * 2^n, capped here) instead of a fresh Steam login every poll.
 MAX_RETRY_BACKOFF = _int("MAX_RETRY_BACKOFF", 6 * 3600)
+# Optional retention: after each new archive, delete the OLDEST archives until
+# downloads/ is at most this many GB. 0 (default) keeps everything forever.
+MAX_ARCHIVE_GB = _int("MAX_ARCHIVE_GB", 0)
 HEARTBEAT_FILE = DATA_DIR / ".heartbeat"
 
 # DepotDownloader throttling / back-off (same knobs the original tool used).
